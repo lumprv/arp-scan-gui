@@ -73,3 +73,42 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.pushButton.setText(_translate("MainWindow", "SCAN"))
+        item = self.tableWidget.verticalHeaderItem(0)
+        item.setText(_translate("MainWindow", "1"))
+        item = self.tableWidget.horizontalHeaderItem(0)
+        item.setText(_translate("MainWindow", "IP Address"))
+        item = self.tableWidget.horizontalHeaderItem(1)
+        item.setText(_translate("MainWindow", "MAC Address"))
+        item = self.tableWidget.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "Vendor"))
+        __sortingEnabled = self.tableWidget.isSortingEnabled()
+        self.tableWidget.setSortingEnabled(False)
+        item = self.tableWidget.item(0, 0)
+        item.setText(_translate("MainWindow", "192.168.0.1"))
+        item = self.tableWidget.item(0, 1)
+        item.setText(_translate("MainWindow", "00:21:55:ee:90:cd"))
+        item = self.tableWidget.item(0, 2)
+        item.setText(_translate("MainWindow", "Intel"))
+        self.tableWidget.setSortingEnabled(__sortingEnabled)
+        self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
+        self.label_2.setText(_translate("MainWindow", "Number of IP scanned"))
+        self.label_3.setText(_translate("MainWindow", "Results"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+    
