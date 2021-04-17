@@ -2,6 +2,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from scapy.all import ARP, Ether, srp
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem
 import requests
+import netifaces
+from ipaddress import IPv4Network
 
 
 class Ui_MainWindow(object):
@@ -36,6 +38,7 @@ class Ui_MainWindow(object):
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setObjectName("comboBox")
         #self.comboBox.addItems(netifaces.interfaces())
+        self.comboBox.addItems(netifaces.gateways()['default'][netifaces.AF_INET]) #get default interface
         self.verticalLayout.addWidget(self.comboBox)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
@@ -141,8 +144,26 @@ class Ui_MainWindow(object):
         return tableWidgetItem
 
     def scan(self):
-        target_ip = self.lineEdit_2.text()
-        print("IP is = ", target_ip)
+        #target_ip = self.lineEdit_2.text()
+        #print("IP is = ", target_ip)
+        #target_ip = self.lineEdit_2.text()
+        #defaultInterface = self.comboBox.currentText()
+        self.tableWidget.setRowCount(0)
+        defaultInterface = netifaces.gateways()['default'][netifaces.AF_INET]
+        print(defaultInterface)
+        gateway = defaultInterface[0]
+        print(gateway)
+        interface = netifaces.ifaddresses('eth0').get(2, [])
+        print(interface)
+        netmask = interface[0]['netmask']
+        num_mask = str(addr2bin(netmask).count("1"))
+        print(num_mask)
+
+        target_ip = gateway + "/" + num_mask
+        #print(ip)
+        #target_ip = IPv4Network(ip)
+        print(target_ip)
+
         arp = ARP(pdst=target_ip)
         ether = Ether(dst="ff:ff:ff:ff:ff:ff")
         # stack them
@@ -155,27 +176,40 @@ class Ui_MainWindow(object):
         for sent, received in result:
             # for each response, append ip and mac address to `clients` list
             clients.append({'ip': received.psrc, 'mac': received.hwsrc})
+        self.progressBar.setProperty("value", 25)
 
         # print clients
         print("Available devices in the network:")
         print("IP" + " " * 18 + "MAC")
+        row_number = 0
         for client in clients:
             #self.tableWidget.setItem(0, 0, client['ip'], client['mac'])
 
             url = "https://api.macvendors.com/"
+            self.progressBar.setProperty("value", 50)
+
             response = requests.get(url + client['mac'])
             if response.status_code != 200:
-                raise Exception("[!] Invalid MAC Address!")
+                vendor = "Unknown"
             else:
                 vendor = response.content.decode()
+            self.progressBar.setProperty("value", 75)
 
-            row_number = self.tableWidget.rowCount()
             self.tableWidget.insertRow(row_number)
             self.tableWidget.setItem(row_number, 0, self.createItem(client['ip']))
             self.tableWidget.setItem(row_number, 1, self.createItem(client['mac']))
             self.tableWidget.setItem(row_number, 2, self.createItem(vendor))
-            print("{:16}    {}".format(client['ip'], client['mac']))
 
+            self.progressBar.setProperty("value", 100)
+
+            print("{:16}    {}    {}".format(client['ip'], client['mac'], vendor))
+
+def addr2bin(addr):
+    binary = ""
+    for num in addr.split("."):
+        b = str(bin(int(num))).split("b")[1]
+        binary += "0" * (8 - len(b)) + b
+    return binary
 
 if __name__ == "__main__":
     import sys
