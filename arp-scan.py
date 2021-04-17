@@ -1,7 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from scapy.all import ARP, Ether, srp
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem
+import requests
 
 
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(868, 564)
@@ -41,10 +45,13 @@ class Ui_MainWindow(object):
         self.tableWidget.setHorizontalHeaderItem(2, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setItem(0, 0, item)
+        self.tableWidget.setColumnWidth(0, 100)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setItem(0, 1, item)
+        self.tableWidget.setColumnWidth(1, 100)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setItem(0, 2, item)
+        self.tableWidget.setColumnWidth(2, 100)
         self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_2.setGeometry(QtCore.QRect(490, 56, 171, 31))
         self.lineEdit_2.setObjectName("lineEdit_2")
@@ -74,6 +81,12 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
+
+
+        self.pushButton.clicked.connect(self.scan)
+        self.pushButton.resize(200, 32)
+        self.pushButton.move(80, 60)
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -91,16 +104,57 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Vendor"))
         __sortingEnabled = self.tableWidget.isSortingEnabled()
         self.tableWidget.setSortingEnabled(False)
-        item = self.tableWidget.item(0, 0)
-        item.setText(_translate("MainWindow", "192.168.0.1"))
-        item = self.tableWidget.item(0, 1)
-        item.setText(_translate("MainWindow", "00:21:55:ee:90:cd"))
-        item = self.tableWidget.item(0, 2)
-        item.setText(_translate("MainWindow", "Intel"))
+        #item = self.tableWidget.item(0, 0)
+        #item.setText(_translate("MainWindow", "192.168.0.1"))
+        #item = self.tableWidget.item(0, 1)
+        #item.setText(_translate("MainWindow", "00:21:55:ee:90:cd"))
+        #item = self.tableWidget.item(0, 2)
+        #item.setText(_translate("MainWindow", "Intel"))
         self.tableWidget.setSortingEnabled(__sortingEnabled)
         self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
         self.label_2.setText(_translate("MainWindow", "Number of IP scanned"))
         self.label_3.setText(_translate("MainWindow", "Results"))
+
+    def createItem(self, text):
+        tableWidgetItem = QTableWidgetItem(text)
+        # tableWidgetItem.setFlags(flags)
+        return tableWidgetItem
+
+    def scan(self):
+        target_ip = self.lineEdit_2.text()
+        print("IP is = ", target_ip)
+        arp = ARP(pdst=target_ip)
+        ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+        # stack them
+        packet = ether / arp
+
+        result = srp(packet, timeout=3, verbose=0)[0]
+        # a list of clients, we will fill this in the upcoming loop
+        clients = []
+
+        for sent, received in result:
+            # for each response, append ip and mac address to `clients` list
+            clients.append({'ip': received.psrc, 'mac': received.hwsrc})
+
+        # print clients
+        print("Available devices in the network:")
+        print("IP" + " " * 18 + "MAC")
+        for client in clients:
+            #self.tableWidget.setItem(0, 0, client['ip'], client['mac'])
+
+            url = "https://api.macvendors.com/"
+            response = requests.get(url + client['mac'])
+            if response.status_code != 200:
+                raise Exception("[!] Invalid MAC Address!")
+            else:
+                vendor = response.content.decode()
+
+            row_number = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(row_number)
+            self.tableWidget.setItem(row_number, 0, self.createItem(client['ip']))
+            self.tableWidget.setItem(row_number, 1, self.createItem(client['mac']))
+            self.tableWidget.setItem(row_number, 2, self.createItem(vendor))
+            print("{:16}    {}".format(client['ip'], client['mac']))
 
 
 if __name__ == "__main__":
