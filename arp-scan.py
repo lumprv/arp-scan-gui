@@ -1,12 +1,15 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from scapy.all import ARP, Ether, srp
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem, QFileDialog
 import requests
 import netifaces
 from ipaddress import IPv4Network
+import xlwt
+import os
+import csv
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QWidget):
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -43,6 +46,9 @@ class Ui_MainWindow(object):
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
         self.verticalLayout.addWidget(self.pushButton)
+        self.saveButton = QtWidgets.QPushButton(self.centralwidget)
+        self.saveButton.setObjectName("saveButton")
+        self.verticalLayout.addWidget(self.saveButton)
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(13)
@@ -106,9 +112,14 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.pushButton.clicked.connect(self.scan)
+        self.saveButton.clicked.connect(self.save)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+        #self.actionExport.triggered.connect(lambda: self.clicked("Export u klikua"))
+        self.actionExport.triggered.connect(self.save)
+        self.actionExit.triggered.connect(lambda: self.clicked("Exit u klikua"))
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -116,6 +127,7 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
         self.label_4.setText(_translate("MainWindow", "Select Interface"))
         self.pushButton.setText(_translate("MainWindow", "SCAN"))
+        self.saveButton.setText(_translate("MainWindow", "SAVE"))
         self.label_3.setText(_translate("MainWindow", "Results"))
         self.tableWidget.setSortingEnabled(False)
         #self.pushButton.setText(_translate("MainWindow", "SCAN"))
@@ -133,10 +145,15 @@ class Ui_MainWindow(object):
         #self.tableWidget.setSortingEnabled(__sortingEnabled)
         self.menuFile.setTitle(_translate("MainWindow", "&File"))
         self.actionExport.setText(_translate("MainWindow", "Export"))
+        self.actionExport.setShortcut(_translate("MainWindow", "Ctrl+E"))
+        self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+X"))
         self.actionExit.setText(_translate("MainWindow", "&Quit"))
         #self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
         #self.label_2.setText(_translate("MainWindow", "Number of IP scanned"))
         #self.label_3.setText(_translate("MainWindow", "Results"))
+
+    def clicked(self, text):
+        print(text)
 
     def createItem(self, text):
         tableWidgetItem = QTableWidgetItem(text)
@@ -150,19 +167,12 @@ class Ui_MainWindow(object):
         #defaultInterface = self.comboBox.currentText()
         self.tableWidget.setRowCount(0)
         defaultInterface = netifaces.gateways()['default'][netifaces.AF_INET]
-        print(defaultInterface)
         gateway = defaultInterface[0]
-        print(gateway)
         interface = netifaces.ifaddresses('eth0').get(2, [])
-        print(interface)
         netmask = interface[0]['netmask']
         num_mask = str(addr2bin(netmask).count("1"))
-        print(num_mask)
 
         target_ip = gateway + "/" + num_mask
-        #print(ip)
-        #target_ip = IPv4Network(ip)
-        print(target_ip)
 
         arp = ARP(pdst=target_ip)
         ether = Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -204,12 +214,30 @@ class Ui_MainWindow(object):
 
             print("{:16}    {}    {}".format(client['ip'], client['mac'], vendor))
 
+    def save(self):
+        path = QFileDialog.getSaveFileName(self, 'Save CSV', os.getenv('Desktop'), 'CSV(*.csv)')
+        if path[0] != '':
+            with open(path[0], 'w') as csv_file:
+                writer = csv.writer(csv_file, dialect='excel')
+                for row in range(self.tableWidget.rowCount()):
+                    row_data = []
+                    for column in range(self.tableWidget.columnCount()):
+                        item = self.tableWidget.item(row, column)
+                        if item is not None:
+                            row_data.append(item.text())
+                        else:
+                            row_data.append('')
+                    writer.writerow(row_data)
+
+
 def addr2bin(addr):
     binary = ""
     for num in addr.split("."):
         b = str(bin(int(num))).split("b")[1]
         binary += "0" * (8 - len(b)) + b
     return binary
+
+
 
 if __name__ == "__main__":
     import sys
