@@ -7,7 +7,7 @@ from ipaddress import IPv4Network
 import xlwt
 import os
 import csv
-
+import socket
 
 class Ui_MainWindow(QWidget):
 
@@ -43,6 +43,7 @@ class Ui_MainWindow(QWidget):
         self.lineEdit_2.setReadOnly(True)
         self.lineEdit_2.setClearButtonEnabled(True)
         self.lineEdit_2.setObjectName("lineEdit_2")
+        self.lineEdit_2.setText(self.getIPAddress())
         self.verticalLayout.addWidget(self.lineEdit_2)
 
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
@@ -52,6 +53,7 @@ class Ui_MainWindow(QWidget):
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setReadOnly(True)
         self.lineEdit.setObjectName("lineEdit")
+        self.lineEdit.setText(self.getMacAddres())
         self.verticalLayout.addWidget(self.lineEdit)
 
         self.label_6 = QtWidgets.QLabel(self.centralwidget)
@@ -60,6 +62,7 @@ class Ui_MainWindow(QWidget):
         self.lineEdit_4 = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_4.setReadOnly(True)
         self.lineEdit_4.setObjectName("lineEdit_4")
+        self.lineEdit_4.setText(self.getDefaultGateway())
         self.verticalLayout.addWidget(self.lineEdit_4)
         self.label_7 = QtWidgets.QLabel(self.centralwidget)
         self.label_7.setObjectName("label_7")
@@ -67,6 +70,7 @@ class Ui_MainWindow(QWidget):
         self.lineEdit_3 = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_3.setReadOnly(True)
         self.lineEdit_3.setObjectName("lineEdit_3")
+        self.lineEdit_3.setText(self.getSubnetMask())
         self.verticalLayout.addWidget(self.lineEdit_3)
 
         self.label = QtWidgets.QLabel(self.centralwidget)
@@ -83,7 +87,8 @@ class Ui_MainWindow(QWidget):
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setObjectName("comboBox")
         #self.comboBox.addItems(netifaces.interfaces())
-        self.comboBox.addItems(netifaces.gateways()['default'][netifaces.AF_INET]) #get default interface
+        #self.comboBox.addItems(netifaces.gateways()['default'][netifaces.AF_INET]) #get default interface
+        self.comboBox.addItem(self.getInterface())
         self.verticalLayout.addWidget(self.comboBox)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
@@ -166,8 +171,12 @@ class Ui_MainWindow(QWidget):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
-        self.label_4.setText(_translate("MainWindow", "Select Interface"))
+        self.label_4.setText(_translate("MainWindow", "Your IP Address"))
+        self.label_5.setText(_translate("MainWindow", "Your MAC Address"))
+        self.label_6.setText(_translate("MainWindow", "Your Default Gateway"))
+        self.label_7.setText(_translate("MainWindow", "Your Subnet Mask"))
+        self.label.setText(_translate("MainWindow", "Interface"))
+        #self.label_4.setText(_translate("MainWindow", "Select Interface"))
         self.pushButton.setText(_translate("MainWindow", "SCAN"))
         self.saveButton.setText(_translate("MainWindow", "SAVE"))
         self.label_3.setText(_translate("MainWindow", "Results"))
@@ -194,6 +203,37 @@ class Ui_MainWindow(QWidget):
         #self.label_2.setText(_translate("MainWindow", "Number of IP scanned"))
         #self.label_3.setText(_translate("MainWindow", "Results"))
 
+    def getIPAddress(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+
+    def getInterface(self):
+        gws = netifaces.gateways()
+        interface = gws['default'][netifaces.AF_INET][1]
+        return interface
+
+    def getSubnetMask(self):
+        interface = netifaces.ifaddresses('eth0').get(2, [])
+        netmask = interface[0]['netmask']
+        return netmask
+
+    def getDefaultGateway(self):
+        gws = netifaces.gateways()
+        defaultGateway = gws['default'][netifaces.AF_INET][0]
+        return defaultGateway
+
+    def getMacAddres(self):
+        mac = netifaces.ifaddresses(self.getInterface())[netifaces.AF_LINK][0]['addr']
+        return mac
+    
     def clicked(self, text):
         print(text)
 
@@ -212,9 +252,11 @@ class Ui_MainWindow(QWidget):
         gateway = defaultInterface[0]
         interface = netifaces.ifaddresses('eth0').get(2, [])
         netmask = interface[0]['netmask']
+        #self.lineEdit_4.setText(netmask)
         num_mask = str(addr2bin(netmask).count("1"))
 
         target_ip = gateway + "/" + num_mask
+        print(target_ip)
 
         arp = ARP(pdst=target_ip)
         ether = Ether(dst="ff:ff:ff:ff:ff:ff")
