@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from scapy.all import ARP, Ether, srp
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QTableWidgetItem, QFileDialog, QMessageBox, qApp
 import requests
 import netifaces
 from ipaddress import IPv4Network
@@ -166,7 +166,7 @@ class Ui_MainWindow(QWidget):
 
         #self.actionExport.triggered.connect(lambda: self.clicked("Export u klikua"))
         self.actionExport.triggered.connect(self.save)
-        self.actionExit.triggered.connect(lambda: self.clicked("Exit u klikua"))
+        self.actionExit.triggered.connect(self.closeEvent)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -199,9 +199,6 @@ class Ui_MainWindow(QWidget):
         self.actionExport.setShortcut(_translate("MainWindow", "Ctrl+E"))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+X"))
         self.actionExit.setText(_translate("MainWindow", "&Quit"))
-        #self.label.setText(_translate("MainWindow", "Type IP Address to Scan"))
-        #self.label_2.setText(_translate("MainWindow", "Number of IP scanned"))
-        #self.label_3.setText(_translate("MainWindow", "Results"))
 
     def getIPAddress(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -233,7 +230,7 @@ class Ui_MainWindow(QWidget):
     def getMacAddres(self):
         mac = netifaces.ifaddresses(self.getInterface())[netifaces.AF_LINK][0]['addr']
         return mac
-    
+
     def clicked(self, text):
         print(text)
 
@@ -248,6 +245,7 @@ class Ui_MainWindow(QWidget):
         #target_ip = self.lineEdit_2.text()
         #defaultInterface = self.comboBox.currentText()
         self.tableWidget.setRowCount(0)
+        self.progressBar.setProperty("value", 0)
         defaultInterface = netifaces.gateways()['default'][netifaces.AF_INET]
         gateway = defaultInterface[0]
         interface = netifaces.ifaddresses('eth0').get(2, [])
@@ -313,6 +311,17 @@ class Ui_MainWindow(QWidget):
                             row_data.append('')
                     writer.writerow(row_data)
 
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Message',
+                                     "Are you sure to quit?", QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
+    def quitApp(self):
+        qApp.quit()
 
 def addr2bin(addr):
     binary = ""
