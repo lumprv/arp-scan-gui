@@ -28,7 +28,6 @@ class Ui_MainWindow(QWidget):
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName("verticalLayout")
-
         self.label_4 = QtWidgets.QLabel(self.centralwidget)
         self.label_4.setObjectName("label_4")
         self.verticalLayout.addWidget(self.label_4)
@@ -45,7 +44,6 @@ class Ui_MainWindow(QWidget):
         self.lineEdit_2.setObjectName("lineEdit_2")
         self.lineEdit_2.setText(self.getIPAddress())
         self.verticalLayout.addWidget(self.lineEdit_2)
-
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         self.label_5.setObjectName("label_5")
         self.verticalLayout.addWidget(self.label_5)
@@ -72,22 +70,11 @@ class Ui_MainWindow(QWidget):
         self.lineEdit_3.setObjectName("lineEdit_3")
         self.lineEdit_3.setText(self.getSubnetMask())
         self.verticalLayout.addWidget(self.lineEdit_3)
-
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setObjectName("label")
-        self.verticalLayout.addWidget(self.label)
-
-        #self.lineEdit_2 = QtWidgets.QLineEdit(self.centralwidget)
-        #self.lineEdit_2.setClearButtonEnabled(True)
-        #self.lineEdit_2.setObjectName("lineEdit_2")
-        #self.verticalLayout.addWidget(self.lineEdit_2)
-        #self.label_4 = QtWidgets.QLabel(self.centralwidget)
-        #self.label_4.setObjectName("label_4")
-        #self.verticalLayout.addWidget(self.label_4)
+        self.verticalLayout.addWidget(self.label)        
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setObjectName("comboBox")
-        #self.comboBox.addItems(netifaces.interfaces())
-        #self.comboBox.addItems(netifaces.gateways()['default'][netifaces.AF_INET]) #get default interface
         self.comboBox.addItem(self.getInterface())
         self.verticalLayout.addWidget(self.comboBox)
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
@@ -176,7 +163,6 @@ class Ui_MainWindow(QWidget):
         self.label_6.setText(_translate("MainWindow", "Your Default Gateway"))
         self.label_7.setText(_translate("MainWindow", "Your Subnet Mask"))
         self.label.setText(_translate("MainWindow", "Interface"))
-        #self.label_4.setText(_translate("MainWindow", "Select Interface"))
         self.pushButton.setText(_translate("MainWindow", "SCAN"))
         self.saveButton.setText(_translate("MainWindow", "SAVE"))
         self.label_3.setText(_translate("MainWindow", "Results"))
@@ -240,10 +226,6 @@ class Ui_MainWindow(QWidget):
         return tableWidgetItem
 
     def scan(self):
-        #target_ip = self.lineEdit_2.text()
-        #print("IP is = ", target_ip)
-        #target_ip = self.lineEdit_2.text()
-        #defaultInterface = self.comboBox.currentText()
         self.tableWidget.setRowCount(0)
         self.progressBar.setProperty("value", 0)
         defaultInterface = netifaces.gateways()['default'][netifaces.AF_INET]
