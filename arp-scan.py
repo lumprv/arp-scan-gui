@@ -80,9 +80,6 @@ class Ui_MainWindow(QWidget):
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton.setObjectName("pushButton")
         self.verticalLayout.addWidget(self.pushButton)
-        self.saveButton = QtWidgets.QPushButton(self.centralwidget)
-        self.saveButton.setObjectName("saveButton")
-        self.verticalLayout.addWidget(self.saveButton)
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(13)
@@ -146,7 +143,6 @@ class Ui_MainWindow(QWidget):
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.pushButton.clicked.connect(self.scan)
-        self.saveButton.clicked.connect(self.save)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -164,7 +160,6 @@ class Ui_MainWindow(QWidget):
         self.label_7.setText(_translate("MainWindow", "Your Subnet Mask"))
         self.label.setText(_translate("MainWindow", "Interface"))
         self.pushButton.setText(_translate("MainWindow", "SCAN"))
-        self.saveButton.setText(_translate("MainWindow", "SAVE"))
         self.label_3.setText(_translate("MainWindow", "Results"))
         self.tableWidget.setSortingEnabled(False)
         #self.pushButton.setText(_translate("MainWindow", "SCAN"))
